@@ -1,0 +1,291 @@
+/* Kumo standalone styles：包含 Kumo 组件样式 + Tailwind 工具类 + 暗色模式 */
+@import "@cloudflare/kumo/styles/standalone";
+
+:root {
+  color-scheme: light;
+}
+[data-mode="dark"] {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: "Open Sans", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+  background: var(--color-kumo-base, oklch(99% 0 0));
+  color: var(--text-color-kumo-default, inherit);
+}
+
+/* 全局滚动条 */
+* {
+  scrollbar-color: color-mix(in oklch, currentColor 25%, transparent) transparent;
+}
+
+/* 几个轻量全局工具类，用于弥补 kumo standalone Tailwind 精简版的缺项 */
+.fm-grid-fill {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  height: 100%;
+}
+.fm-scroll {
+  overflow: auto;
+  scrollbar-width: thin;
+}
+.fm-ellipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.fm-monospace {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+
+/* 让 kumo 的 Toast viewport 在移动端不撑开布局 */
+[data-toast-viewport] {
+  z-index: 9999;
+}
+
+/*
+ * 收件箱未读邮件高亮兜底。原代码用 data-[unread]:bg-kumo-tint/30，
+ * 但 kumo standalone 未提供该透明度变体（连同 hover:bg-kumo-tint/XX 一并失效），
+ * 改以属性选择器 + 不透明浅 tint 实现，确保移动端/桌面端未读项都可见区分。
+ */
+.fm-mail-item[data-unread="true"] {
+  background: color-mix(in oklab, var(--color-kumo-tint, #f1f5fb), transparent 40%);
+}
+.fm-mail-item[data-unread="true"]:hover {
+  background: color-mix(in oklab, var(--color-kumo-tint, #f1f5fb), transparent 25%);
+}
+.fm-mail-item:hover {
+  border-color: var(--color-kumo-line, #e5e7eb);
+  background: color-mix(in oklab, var(--color-kumo-tint, #f1f5fb), transparent 50%);
+}
+
+/*
+ * Dialog 移动端兜底。kumo Dialog 各档宽度走 sm: 前缀，小屏下不生效会回退到
+ * base-ui 默认宽度，已能基本满宽。这里仅做高度与溢出兜底，防止长邮件 / 长表单
+ * 弹窗超出视口而够不到关闭按钮；并让内容区在小屏略减 padding 更易触达。
+ */
+@media (max-width: 47.99rem) {
+  [role="dialog"] {
+    max-height: 92vh;
+    max-width: calc(100vw - 1rem);
+    margin-block: auto;
+    overflow: auto;
+  }
+  [role="dialog"]:focus {
+    outline: none;
+  }
+}
+
+/*
+ * AppShell 移动端导航抽屉：左侧滑出面板 + 半透明遮罩。
+ * 仅在 < 48rem（手机）下生效，桌面侧栏仍常驻。
+ */
+.fm-nav-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgb(0 0 0 / 0.4);
+  z-index: 60;
+  animation: fm-fade 0.15s ease;
+}
+.fm-nav-drawer {
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 70;
+  width: 16rem;
+  max-width: 80vw;
+  background: var(--color-kumo-base, #fff);
+  border-right: 1px solid var(--color-kumo-line, #e5e7eb);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(-100%);
+  transition: transform 0.2s ease;
+  overflow-y: auto;
+  box-shadow: 4px 0 16px rgb(0 0 0 / 0.15);
+}
+.fm-nav-drawer-open {
+  transform: translateX(0);
+}
+@keyframes fm-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/*
+ * kumo standalone Tailwind 是精简版，下列容器宽/高工具类并未提供，
+ * 但代码中长期引用它们（登录卡片、主内容区限宽、侧栏宽度、历史列表高度、
+ * markdown 渲染排版等）。这里补齐其语义，使既有引用真正生效。
+ * 断点沿用 kumo 的 rem 口径：sm=40rem, md=48rem, lg=64rem。
+ */
+.max-w-sm { max-width: 24rem; }
+.max-w-md { max-width: 28rem; }
+.max-w-3xl { max-width: 48rem; }
+.max-w-4xl { max-width: 56rem; }
+.max-w-6xl { max-width: 72rem; }
+.max-w-7xl { max-width: 80rem; }
+.w-56 { width: 14rem; }
+.w-72 { width: 18rem; }
+.w-96 { width: 24rem; }
+.max-h-96 { max-height: 24rem; }
+.max-h-72 { max-height: 18rem; }
+
+/* 纯文本邮件正文换行（kumo 未提供 break-words） */
+.break-words { overflow-wrap: break-word; word-break: break-word; }
+.break-all { word-break: break-all; }
+.whitespace-pre-wrap { white-space: pre-wrap; }
+
+/*
+ * HTTP 方法徽章（API 调用示例用）。统一小号等宽、圆角胶囊。
+ */
+.fm-method-badge {
+  display: inline-block;
+  min-width: 3rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 0.375rem;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: center;
+}
+
+/*
+ * 高频 .5 尺寸/padding 缺口补丁。kumo standalone 未提供下列带 .5 的工具类，
+ * 但项目大量引用（图标尺寸 h/w-3.5，徽章与列表项的 px/py-1.5/0.5/2.5 等）。
+ * 统一按 var(--spacing)=0.25rem 与尺寸刻度补齐，使其视觉符合设计意图。
+ */
+.h-3\.5 { height: calc(var(--spacing) * 3.5); }
+.w-3\.5 { width: calc(var(--spacing) * 3.5); }
+.px-1\.5 { padding-inline: calc(var(--spacing) * 1.5); }
+.py-0\.5 { padding-block: calc(var(--spacing) * 0.5); }
+.py-1\.5 { padding-block: calc(var(--spacing) * 1.5); }
+.py-2\.5 { padding-block: calc(var(--spacing) * 2.5); }
+.mt-0\.5 { margin-top: calc(var(--spacing) * 0.5); }
+/* 大表格备用基础列（项目目前以 sm:/md: 变体使用，补基础版以防回退） */
+.grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.grid-cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+/* 任意值高度类（EmailViewer / Dialog 限高用） */
+.max-h-\[88vh\] { max-height: 88vh; }
+.max-h-\[85vh\] { max-height: 85vh; }
+.max-h-\[90vh\] { max-height: 90vh; }
+/* 图标旋转（折叠箭头翻转用） */
+.rotate-180 { transform: rotate(180deg); }
+
+
+/*
+ * 响应式断点变体补充。kumo standalone 的 Tailwind 是预生成精简版，
+ * 仅自带极少数 sm:/md:/lg: 变体。项目实际用到的下列断点组合全部缺失，
+ * 在此统一按 kumo 的断点口径补齐：sm=40rem, md=48rem, lg=64rem。
+ * 只补项目真正引用的几个，避免膨胀。
+ */
+@media (min-width: 40rem) {
+  /* sm: 显示与排版 */
+  .sm\:inline { display: inline; }
+  .sm\:flex { display: flex; }
+  .sm\:hidden { display: none; }
+  .sm\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sm\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .sm\:gap-2 { gap: calc(var(--spacing) * 2); }
+  .sm\:px-4 { padding-inline: calc(var(--spacing) * 4); }
+  .sm\:p-4 { padding: calc(var(--spacing) * 4); }
+  .sm\:text-base { font-size: var(--text-base); line-height: var(--tw-leading, var(--text-base--line-height)); }
+}
+@media (min-width: 48rem) {
+  /* md: 收件箱双列、邮箱筛选区五列 */
+  .md\:grid-cols-\[320px_1fr\] { grid-template-columns: 320px 1fr; }
+  .md\:grid-cols-\[1fr_300px\] { grid-template-columns: minmax(0,1fr) 300px; }
+  .md\:grid-cols-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  /* md: 历史邮箱侧栏粘性定位（随主内容滚动时悬浮） */
+  .md\:sticky { position: sticky; }
+  .md\:top-0 { top: 0; }
+  .md\:self-start { align-self: start; }
+}
+
+/*
+ * 邮件 HTML 渲染的最小排版兜底（kumo 未内置 prose）。
+ * 仅给 EmailViewer 的 dangerouslySetInnerHTML 容器使用，适度收窄排版。
+ */
+.prose-sm { font-size: 0.875rem; line-height: 1.6; }
+.prose-sm h1 { font-size: 1.5em; font-weight: 600; margin: 1em 0 0.5em; }
+.prose-sm h2 { font-size: 1.25em; font-weight: 600; margin: 1em 0 0.5em; }
+.prose-sm h3 { font-size: 1.1em; font-weight: 600; margin: 1em 0 0.5em; }
+.prose-sm p { margin: 0.6em 0; }
+.prose-sm ul, .prose-sm ol { margin: 0.6em 0; padding-left: 1.5em; }
+.prose-sm li { margin: 0.25em 0; }
+.prose-sm a { color: var(--color-kumo-brand, #2563eb); text-decoration: underline; }
+.prose-sm code { font-family: ui-monospace, monospace; font-size: 0.85em; }
+.prose-sm pre { margin: 0.8em 0; padding: 0.75em; overflow-x: auto; }
+.prose-sm img { max-width: 100%; height: auto; }
+.prose-sm table { border-collapse: collapse; width: 100%; }
+.prose-sm th, .prose-sm td { border: 1px solid var(--color-kumo-line, #e5e7eb); padding: 0.4em 0.6em; }
+.dark\:prose-invert { }
+[data-mode="dark"] .prose-sm a { color: var(--color-kumo-brand, #93c5fd); }
+
+/*
+ * 历史邮箱列表限高：仅桌面端（双列布局）限高并内部滚动；
+ * 移动端单列堆叠时自然展开，避免小高度夹断历史区域。
+ */
+.fm-history-scroll {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  overflow: auto;
+  padding-right: 0.25rem;
+}
+@media (min-width: 48rem) {
+  .fm-history-scroll {
+    max-height: 24rem;
+  }
+}
+
+/*
+ * 移动端布局辅助：在窄屏把大表格转换为可堆叠的“键值卡片”，避免横向滚动
+ * 体验差。用法：给 <table> 加 class="fm-card-table"，其 <th> 需有 data-label。
+ */
+@media (max-width: 47.99rem) {
+  table.fm-card-table thead {
+    display: none;
+  }
+  table.fm-card-table,
+  table.fm-card-table tbody,
+  table.fm-card-table tr,
+  table.fm-card-table td {
+    display: block;
+    width: 100%;
+  }
+  table.fm-card-table tr {
+    border: 1px solid var(--color-kumo-line, #e5e7eb);
+    border-radius: 10px;
+    margin: 0.5rem 0;
+    padding: 0.25rem 0;
+    background: var(--color-kumo-base, #fff);
+  }
+  table.fm-card-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border: 0;
+    text-align: right;
+  }
+  table.fm-card-table td::before {
+    content: attr(data-label);
+    font-weight: 500;
+    color: var(--text-color-kumo-subtle, #6b7280);
+    text-align: left;
+    flex-shrink: 0;
+  }
+  /* 操作列按钮行右对齐占满 */
+  table.fm-card-table td.fm-actions {
+    justify-content: flex-end;
+  }
+}

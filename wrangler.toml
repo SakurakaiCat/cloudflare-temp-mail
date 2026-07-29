@@ -1,0 +1,60 @@
+# ============================================================
+# Cloudflare 临时邮箱 — V6 配置
+# ------------------------------------------------------------
+# 前端：V6 起为独立 Vite + React + @cloudflare/kumo 工程（frontend/）。
+#   构建命令：npm run build:frontend（产物输出到 public/，即下方 [assets]）。
+#   部署前务必先构建前端；CI 仓库内已配置：cd frontend && npm ci && tsc --noEmit && npm run build:fast。
+# API Key：V6 新增 API Key 鉴权（表 api_keys，由 src/db/apikeys.js 管理），
+#   无需在 wrangler.toml 配置；用户在「API Keys」页面签发，Bearer fm_xxx 调用。
+#   scope：read/create/manage；永久禁止发件/用户管理/Key 自管理/批量管理员操作。
+# 转发：单邮箱 forward_to + 全局 FORWARD_RULES；多合一转发方案见 docs/multi-inbox-forwarding.md。
+# ============================================================
+
+name = "cloudflare-temp-mail"
+main = "src/server.js"
+compatibility_date = "2025-06-01"
+keep_vars = true
+
+# D1 数据库绑定
+# 先创建数据库：npx wrangler d1 create mail-free-db
+# 然后把返回的 database_id 填到下面
+[[d1_databases]]
+binding = "TEMP_MAIL_DB"
+database_name = "mail-free-db"
+database_id = "your-d1-database-id"
+
+# 环境变量
+# 注：ADMIN_PASSWORD 与 JWT_TOKEN 故意不在 [vars] 中声明，避免把敏感值写进仓库。
+#   请使用 `npx wrangler secret put ADMIN_PASSWORD` / `... JWT_TOKEN` 上传为正式 secret，
+#   或依赖 keep_vars=true 保留 Worker 上既有的变量值。
+[vars]
+ADMIN_NAME = "admin"
+GUEST_PASSWORD = "guest"
+SESSION_EXPIRE_DAYS = "365"
+# 收信域名（需在 Cloudflare Email Routing 中把该域名的邮件路由到本 Worker），多个用英文逗号分隔
+MAIL_DOMAIN = "example.com"
+RESEND_API_KEY = ""
+SENDFLARE_API_KEY = ""
+CYBERPERSONS_API_KEY = ""
+# FORWARD_RULES='[{"prefix":"vip","email":"a@example.com"},{"prefix":"*","email":"example@qq.com"}]'
+
+# 静态资源目录（Workers + Assets）
+[assets]
+directory = "public"
+# 显式指定绑定名，确保在 Worker 中通过 env.ASSETS 可用
+binding = "ASSETS"
+# 注：/mail-domains meta 注入（static.js）依赖 Worker 先处理 `/`，但 run_worker_first
+# 数组模式会把 `/` 当前缀也截 `/index.html` 触发递归（实测返回 307/空）。
+# 故保持默认 assets-first：`/` 由 ASSETS 直发 index.html，meta 注入被绕过，
+# 前端改用 /api/domains 拉取域名（已验证线上工作正常）。如需激活 meta 注入，
+# 可改用 `run_worker_first = true`（全局走 Worker，static.js 已正确分流），
+# 但需评估对静态资源 cache 命中率的影响。
+
+# R2 存储桶绑定（用于保存完整 EML 内容）
+[[r2_buckets]]
+binding = "MAIL_EML"
+bucket_name = "mail-eml"
+
+# wrangler.toml (wrangler v3.88.0^) 日志服务
+# [observability.logs]
+# enabled = true

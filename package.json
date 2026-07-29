@@ -1,0 +1,19 @@
+{
+  "name": "cloudflare-temp-mail",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:frontend": "cd frontend && npm install && npm run build",
+    "typecheck:frontend": "cd frontend && npx tsc --noEmit",
+    "dev": "npm run build:frontend && wrangler dev",
+    "deploy": "npm run build:frontend && wrangler deploy"
+  },
+  "dependencies": {
+    "hono": "^4.12.18",
+    "postal-mime": "^2.7.4",
+    "sendflare-sdk-ts": "^1.0.5"
+  },
+  "devDependencies": {
+    "wrangler": "^4.114.0"
+  }
+}
