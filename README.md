@@ -29,6 +29,10 @@
 |----------|----------|
 | ![用户管理](./pic/light/yonghuguanli.png) | ![单个邮箱登录](./pic/dange邮箱登录.png) |
 
+| API 管理 | 邮件详情 |
+|----------|----------|
+| ![API 管理](./pic/light/apikeys.png) | ![邮件详情](./pic/light/emal_detail.png) |
+
 [浅色模式展示](docs/zhanshi-light.md) | [深色模式展示](docs/zhanshi-dark.md)
 
 ## 文档
